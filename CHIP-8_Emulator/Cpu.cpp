@@ -3,6 +3,26 @@
 #include <fstream>
 #include <ctime>
 
+const unsigned char Chip8::fontset[FONTSET_SIZE] =
+{
+	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+	0x20, 0x60, 0x20, 0x20, 0x70, // 1
+	0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+	0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+	0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+	0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+	0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+	0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+	0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+	0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+	0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+	0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+	0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+	0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+	0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
+
 Chip8::Chip8()
 {
 	// Clear registers
@@ -13,7 +33,7 @@ Chip8::Chip8()
 	
 	drawFlag = true;
 
-	// Clear data storages
+	// Prepare data storages
 	for (int i = 0; i < NUM_REGISTERS; ++i)
 		V[i] = 0;
 
@@ -29,10 +49,11 @@ Chip8::Chip8()
 	for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i)
 		gfx[i] = 0;
 
-	// @TODO: Load fontset ??!
+	for (int i = 80; i < FONTSET_SIZE; ++i)
+		memory[i] = fontset[i];
 
 	// Clear timers
-	soundTimer = 0; // @TODO: Correct ?!
+	soundTimer = 0; 
 	delayTimer = 0;
 
 	srand(time(NULL));
@@ -73,8 +94,12 @@ void Chip8::MainLoop()
 void Chip8::EmulateCycle()
 {
 	opcode = FetchOpcode();
+	DecodeExecute();
+	UpdateTimers();
+}
 
-	// Decode and execute opcode
+void Chip8::DecodeExecute()
+{
 	switch (opcode & 0xF000)
 	{
 	case 0x0000:
@@ -222,18 +247,45 @@ void Chip8::EmulateCycle()
 		break;
 
 	case 0xD000: // Disp, draw(Vx, Vy, N)
+	{
+		unsigned short x = V[(opcode & 0x0F00) >> 8];
+		unsigned short y = V[(opcode & 0x00F0) >> 4];
+		unsigned short height = opcode & 0x000F;
+		unsigned short pixel;
+		V[CARRY_FLAG] = 0; // CF is set to 1 when there was a change of pixel. It's mechanism for collision detection
 
-		break;
+		for (int i = 0; i < height; ++i)
+		{
+			pixel = memory[I + i];
+			for (int j = 0; j < 8; ++j)
+			{
+				// If pixel is activated
+				if (pixel & (0x80 >> j) != 0)
+				{
+					// Check for collision
+					if (gfx[x + j + (y + i) * SCREEN_WIDTH] == 1)
+						V[CARRY_FLAG] = 1;
+
+					// Activate/Deactivate pixel
+					gfx[x + j + (y + i) * SCREEN_WIDTH] ^= 1;
+				}
+			}
+		}
+
+		drawFlag = true;
+		UpdatePC();
+	}
+	break;
 
 	case 0xE000:
 		switch (opcode & 0x000F)
 		{
 		case 0x000E: // KeyOp, if (key() == Vx)
-
+			(key[V[(opcode & 0x0F00) >> 8]] != 0) ? pc += 4 : UpdatePC();
 			break;
 
 		case 0x0001: // KeyOp, if (key() != Vx)
-
+			(key[V[(opcode & 0x0F00) >> 8]] == 0) ? pc += 4 : UpdatePC();
 			break;
 
 		default:
@@ -245,12 +297,30 @@ void Chip8::EmulateCycle()
 		switch (opcode & 0x00FF)
 		{
 		case 0x0007: // Timer, Vx = get_delay()
-
+			V[(opcode & 0x0F00) >> 8] = delayTimer;
+			UpdatePC();
 			break;
 
 		case 0x000A: // KeyOp, Vx = get_key()
+		{
+			bool keyPressed = false;
 
-			break;
+			for (int i = 0; i < NUM_KEYS; ++i)
+			{
+				// Key is pressed
+				if (key[i] != 0)
+				{
+					V[(opcode & 0x0F00) >> 8] = i; // Set Vx to pressed key (i)
+					keyPressed = true;
+				}
+			}
+
+			// Go to next instruction only if key is pressed.
+			// Mechanism for waiting a key press is to not update program counter.
+			if (keyPressed)
+				UpdatePC();
+		}
+		break;
 
 		case 0x0015: // Timer, delay_timer(Vx)
 			delayTimer = V[(opcode & 0x0F00) >> 8];
@@ -268,19 +338,29 @@ void Chip8::EmulateCycle()
 			break;
 
 		case 0x0029: // Mem, I = sprite_addr[Vx]
-
+			I = V[(opcode & 0x0F00) >> 8] * 5;
+			UpdatePC();
 			break;
 
 		case 0x0033: // Bcd
-			
+			memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
+			memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
+			memory[I + 2] = V[(opcode & 0x0F00) >> 8] % 10;
+			UpdatePC();
 			break;
 
 		case 0x0055: // Mem, reg_dump(Vx, &I)
-			
+			for (int i = 0; i <= (opcode & 0x0F00) >> 8; ++i)
+				memory[I++] = V[i];
+
+			UpdatePC();
 			break;
 
 		case 0x0065: // Mem, reg_load(Vx, &I)
+			for (int i = 0; i <= (opcode & 0x0F00) >> 8; ++i)
+				V[i] = memory[I++];
 
+			UpdatePC();
 			break;
 
 		default:
@@ -291,8 +371,6 @@ void Chip8::EmulateCycle()
 	default:
 		std::cout << "Error (Decode): Unknown opcode " << opcode << "." << std::endl;
 	}
-
-	UpdateTimers();
 }
 
 /* Get next opcode from memory. Big-endian. */

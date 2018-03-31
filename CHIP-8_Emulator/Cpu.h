@@ -8,6 +8,7 @@
 #define SCREEN_HEIGHT 32
 #define STACK_SIZE 16
 #define NUM_KEYS 16
+#define FONTSET_SIZE 80
 
 class Chip8
 {
@@ -20,12 +21,14 @@ public:
 	void LoadROM(const std::string& romPath);
 
 	unsigned short FetchOpcode();
+	void DecodeExecute();
 	void UpdateTimers();
 	void UpdatePC();
 
 private:
 
 	bool drawFlag;
+	static const unsigned char fontset[FONTSET_SIZE];
 	const int CARRY_FLAG = NUM_REGISTERS - 1;
 
 	// Registers
