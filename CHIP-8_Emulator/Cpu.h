@@ -20,11 +20,13 @@ public:
 	void LoadROM(const std::string& romPath);
 
 	unsigned short FetchOpcode();
-	unsigned short DecodeOpcode(unsigned short opcode);
-	unsigned short ExecuteOpcode(unsigned short opcode);
 	void UpdateTimers();
+	void UpdatePC();
 
 private:
+
+	bool drawFlag;
+	const int CARRY_FLAG = NUM_REGISTERS - 1;
 
 	// Registers
 	unsigned short opcode;								// current opcode

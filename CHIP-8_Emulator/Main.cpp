@@ -3,8 +3,6 @@
 
 using namespace std;
 
-
-
 int main()
 {
 	// @TODO: Use SFML ?
@@ -12,7 +10,7 @@ int main()
 	//setupInput();
 
 	Chip8 chip;
-	//chip.LoadROM();
+	chip.LoadROM("pong.c8");
 	chip.MainLoop();
 
 	return 0;
