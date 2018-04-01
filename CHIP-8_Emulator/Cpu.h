@@ -53,3 +53,5 @@ private:
 	unsigned char memory[MEMORY_SIZE];					// 4K memory
 	unsigned short stack[STACK_SIZE];					// stack for jump instructions and function calls
 };
+
+void Log(const std::string& message);
