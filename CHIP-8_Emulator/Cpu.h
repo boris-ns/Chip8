@@ -22,7 +22,7 @@ public:
 	void EmulateCycle();
 	void LoadROM(const std::string& romPath);
 	void Render(sf::RenderWindow& window);
-	void UpdateKeys();
+	void UpdateKeys(sf::RenderWindow& window);
 
 	unsigned short FetchOpcode();
 	void DecodeExecute();

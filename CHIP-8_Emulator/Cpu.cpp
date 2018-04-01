@@ -100,17 +100,10 @@ void Chip8::MainLoop()
 	{
 		EmulateCycle();
 
-		// Render
 		if (drawFlag)
 			Render(window);
 
-		// UpdateKeys();
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-				window.close();
-		}
+		UpdateKeys(window);
 	}
 }
 
@@ -122,17 +115,17 @@ void Chip8::Render(sf::RenderWindow& window)
 		// Pixel is activated
 		if (gfx[i] != 0)
 		{
-			screenImage[j]     = 0; // Red
-			screenImage[j + 1] = 0; // Green
-			screenImage[j + 2] = 0; // Blue
-			screenImage[j + 3] = 1; // Alpha
-		}
-		else
-		{
 			screenImage[j]     = 255; // Red
 			screenImage[j + 1] = 255; // Green
 			screenImage[j + 2] = 255; // Blue
-			screenImage[j + 3] =   1; // Alpha
+			screenImage[j + 3] = 255; // Alpha
+		}
+		else
+		{
+			screenImage[j]     = 0; // Red
+			screenImage[j + 1] = 0; // Green
+			screenImage[j + 2] = 0; // Blue
+			screenImage[j + 3] = 255; // Alpha
 		}
 	}
 
@@ -149,9 +142,71 @@ void Chip8::Render(sf::RenderWindow& window)
 	window.display();
 }
 
-void Chip8::UpdateKeys()
+void Chip8::UpdateKeys(sf::RenderWindow& window)
 {
+	sf::Event event;
+	while (window.pollEvent(event))
+	{
+		if (event.type == sf::Event::Closed)
+			window.close();
 
+		if (event.type == sf::Event::KeyPressed)
+		{
+			switch (event.key.code)
+			{
+			case sf::Keyboard::Num1:
+				key[0] = 1;
+				break;
+			case sf::Keyboard::Num2:
+				key[1] = 1;
+				break;
+			case sf::Keyboard::Num3:
+				key[2] = 1;
+				break;
+			case sf::Keyboard::Num4:
+				key[3] = 1;
+				break;
+			case sf::Keyboard::Q:
+				key[4] = 1;
+				break;
+			case sf::Keyboard::W:
+				key[5] = 1;
+				break;
+			case sf::Keyboard::E:
+				key[6] = 1;
+				break;
+			case sf::Keyboard::R:
+				key[7] = 1;
+				break;
+			case sf::Keyboard::A:
+				key[8] = 1;
+				break;
+			case sf::Keyboard::S:
+				key[9] = 1;
+				break;
+			case sf::Keyboard::D:
+				key[10] = 1;
+				break;
+			case sf::Keyboard::F:
+				key[11] = 1;
+				break;
+			case sf::Keyboard::Z:
+				key[12] = 1;
+				break;
+			case sf::Keyboard::X:
+				key[13] = 1;
+				break;
+			case sf::Keyboard::C:
+				key[14] = 1;
+				break;
+			case sf::Keyboard::V:
+				key[15] = 1;
+				break;
+			default:
+				Log("Wrong key code.");
+			}
+		}
+	}
 }
 
 void Chip8::EmulateCycle()
