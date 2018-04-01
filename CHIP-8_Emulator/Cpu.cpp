@@ -66,6 +66,9 @@ Chip8::~Chip8()
 {
 }
 
+/* Method for loading ROM into Chip8 memory array. 
+ * Writing in memory starts at location 512.
+ * Also PC is set to 512 in constructor.*/
 void Chip8::LoadROM(const std::string& romPath)
 {
 	std::ifstream inputFile(romPath, std::ios_base::binary);
@@ -92,9 +95,11 @@ void Chip8::LoadROM(const std::string& romPath)
 	Log("ROM loaded successfully.");
 }
 
+/* Main loop of emulator. Loop is active until user closes the window. */
 void Chip8::MainLoop()
 {
 	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Chip8");
+	//window.setFramerateLimit(180); // Real Chip8 works at 60Hz, this is SFML frame limiter
 
 	while (window.isOpen())
 	{
@@ -103,7 +108,7 @@ void Chip8::MainLoop()
 		if (drawFlag)
 			Render(window);
 
-		UpdateKeys(window);
+		HandleEvents(window);
 	}
 }
 
@@ -142,73 +147,92 @@ void Chip8::Render(sf::RenderWindow& window)
 	window.display();
 }
 
-void Chip8::UpdateKeys(sf::RenderWindow& window)
+/* Method for handling events. Right now events of interest
+ * are closed, keypressed and keyreleased*/
+void Chip8::HandleEvents(sf::RenderWindow& window)
 {
 	sf::Event event;
 	while (window.pollEvent(event))
 	{
-		if (event.type == sf::Event::Closed)
-			window.close();
-
-		if (event.type == sf::Event::KeyPressed)
+		switch (event.type)
 		{
-			switch (event.key.code)
-			{
-			case sf::Keyboard::Num1:
-				key[0] = 1;
-				break;
-			case sf::Keyboard::Num2:
-				key[1] = 1;
-				break;
-			case sf::Keyboard::Num3:
-				key[2] = 1;
-				break;
-			case sf::Keyboard::Num4:
-				key[3] = 1;
-				break;
-			case sf::Keyboard::Q:
-				key[4] = 1;
-				break;
-			case sf::Keyboard::W:
-				key[5] = 1;
-				break;
-			case sf::Keyboard::E:
-				key[6] = 1;
-				break;
-			case sf::Keyboard::R:
-				key[7] = 1;
-				break;
-			case sf::Keyboard::A:
-				key[8] = 1;
-				break;
-			case sf::Keyboard::S:
-				key[9] = 1;
-				break;
-			case sf::Keyboard::D:
-				key[10] = 1;
-				break;
-			case sf::Keyboard::F:
-				key[11] = 1;
-				break;
-			case sf::Keyboard::Z:
-				key[12] = 1;
-				break;
-			case sf::Keyboard::X:
-				key[13] = 1;
-				break;
-			case sf::Keyboard::C:
-				key[14] = 1;
-				break;
-			case sf::Keyboard::V:
-				key[15] = 1;
-				break;
-			default:
-				Log("Wrong key code.");
-			}
+		case sf::Event::Closed:
+			window.close();
+			break;
+
+		case sf::Event::KeyPressed:
+			SwitchKeyState(event.key.code, 1);
+			break;
+
+		case sf::Event::KeyReleased:
+			SwitchKeyState(event.key.code, 0);
+			break;
+
+		default:
+			Log("Warning (HandleEvent): There's no handler for that event.");
 		}
 	}
 }
 
+/* Switches keystate of key. */
+void Chip8::SwitchKeyState(sf::Keyboard::Key pressedKey, int state)
+{
+	switch (pressedKey)
+	{
+	case sf::Keyboard::Num1:
+		key[0] = state;
+		break;
+	case sf::Keyboard::Num2:
+		key[1] = state;
+		break;
+	case sf::Keyboard::Num3:
+		key[2] = state;
+		break;
+	case sf::Keyboard::Num4:
+		key[3] = state;
+		break;
+	case sf::Keyboard::Q:
+		key[4] = state;
+		break;
+	case sf::Keyboard::W:
+		key[5] = state;
+		break;
+	case sf::Keyboard::E:
+		key[6] = state;
+		break;
+	case sf::Keyboard::R:
+		key[7] = state;
+		break;
+	case sf::Keyboard::A:
+		key[8] = state;
+		break;
+	case sf::Keyboard::S:
+		key[9] = state;
+		break;
+	case sf::Keyboard::D:
+		key[10] = state;
+		break;
+	case sf::Keyboard::F:
+		key[11] = state;
+		break;
+	case sf::Keyboard::Z:
+		key[12] = state;
+		break;
+	case sf::Keyboard::X:
+		key[13] = state;
+		break;
+	case sf::Keyboard::C:
+		key[14] = state;
+		break;
+	case sf::Keyboard::V:
+		key[15] = state;
+		break;
+	default:
+		Log("Error (Keyboard): Wrong key code.");
+	}
+}
+
+/* 1 cycle of emulation. Fetch opcode, decode, execute and update timers. */
 void Chip8::EmulateCycle()
 {
 	opcode = FetchOpcode();
@@ -216,6 +240,7 @@ void Chip8::EmulateCycle()
 	UpdateTimers();
 }
 
+/* Decodes and executes Chip8 opcode */
 void Chip8::DecodeExecute()
 {
 	switch (opcode & 0xF000)
@@ -526,7 +551,7 @@ void Chip8::DecodeExecute()
 	}
 }
 
-/* Get next opcode from memory. Big-endian. */
+/* Get next opcode from memory. Opcodes are stored as Big-endian. */
 unsigned short Chip8::FetchOpcode()
 {
 	unsigned char highByte = memory[pc];

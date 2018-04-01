@@ -22,7 +22,8 @@ public:
 	void EmulateCycle();
 	void LoadROM(const std::string& romPath);
 	void Render(sf::RenderWindow& window);
-	void UpdateKeys(sf::RenderWindow& window);
+	void HandleEvents(sf::RenderWindow& window);
+	void Chip8::SwitchKeyState(sf::Keyboard::Key pressedKey, int state);
 
 	unsigned short FetchOpcode();
 	void DecodeExecute();

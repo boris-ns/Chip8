@@ -3,7 +3,7 @@
 int main()
 {
 	Chip8 chip;
-	chip.LoadROM("../ROMs/pong2.c8");
+	chip.LoadROM("../ROMs/BLINKY");
 	chip.MainLoop();
 
 	return 0;
