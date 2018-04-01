@@ -1,7 +1,4 @@
-#include <iostream>
 #include "Cpu.h"
-
-using namespace std;
 
 int main()
 {
@@ -10,7 +7,7 @@ int main()
 	//setupInput();
 
 	Chip8 chip;
-	chip.LoadROM("pong.c8");
+	//chip.LoadROM("pong.c8");
 	chip.MainLoop();
 
 	return 0;

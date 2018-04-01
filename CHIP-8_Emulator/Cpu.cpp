@@ -1,4 +1,5 @@
 #include "Cpu.h"
+#include "SFML/Graphics.hpp"
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -57,6 +58,8 @@ Chip8::Chip8()
 	delayTimer = 0;
 
 	srand(time(NULL));
+
+	std::cout << "Chip8 initialized." << std::endl;
 }
 
 Chip8::~Chip8()
@@ -85,10 +88,70 @@ void Chip8::LoadROM(const std::string& romPath)
 	}
 
 	inputFile.close();
+
+	std::cout << "ROM loaded successfully." << std::endl;
 }
 
 void Chip8::MainLoop()
 {
+	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Chip8");
+
+	while (window.isOpen())
+	{
+		//EmulateCycle();
+
+		// Render
+		if (drawFlag)
+			Render(window);
+
+		// UpdateKeys();
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+				window.close();
+		}
+	}
+}
+
+/* Fill Uint8 array. This array is used to create sf::Image object which is going to be drawn. */
+void Chip8::Render(sf::RenderWindow& window)
+{
+	for (int i = 0, j = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i, j += 4)
+	{
+		// Pixel is activated
+		if (gfx[i] != 0)
+		{
+			screenImage[j]     = 0; // Red
+			screenImage[j + 1] = 0; // Green
+			screenImage[j + 2] = 0; // Blue
+			screenImage[j + 3] = 1; // Alpha
+		}
+		else
+		{
+			screenImage[j]     = 255; // Red
+			screenImage[j + 1] = 255; // Green
+			screenImage[j + 2] = 255; // Blue
+			screenImage[j + 3] =   1; // Alpha
+		}
+	}
+
+	sf::Image image;
+	image.create(SCREEN_WIDTH, SCREEN_HEIGHT, screenImage);
+
+	sf::Texture texture;
+	texture.loadFromImage(image);
+	sf::Sprite sprite;
+	sprite.setTexture(texture, true);
+
+	window.clear();
+	window.draw(sprite);
+	window.display();
+}
+
+void Chip8::UpdateKeys()
+{
+
 }
 
 void Chip8::EmulateCycle()
