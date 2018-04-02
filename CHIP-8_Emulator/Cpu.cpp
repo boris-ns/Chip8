@@ -69,7 +69,7 @@ Chip8::~Chip8()
 /* Method for loading ROM into Chip8 memory array. 
  * Writing in memory starts at location 512.
  * Also PC is set to 512 in constructor.*/
-void Chip8::LoadROM(const std::string& romPath)
+bool Chip8::LoadROM(const std::string& romPath)
 {
 	std::ifstream inputFile(romPath, std::ios_base::binary);
 
@@ -80,7 +80,7 @@ void Chip8::LoadROM(const std::string& romPath)
 		if (memLoc > MEMORY_SIZE)
 		{
 			Log("Error loading ROM: Not enough space in memory!");
-			return;
+			return false;
 		}
 
 		unsigned char data = 0;
@@ -93,6 +93,7 @@ void Chip8::LoadROM(const std::string& romPath)
 	inputFile.close();
 
 	Log("ROM loaded successfully.");
+	return true;
 }
 
 /* Main loop of emulator. Loop is active until user closes the window. */

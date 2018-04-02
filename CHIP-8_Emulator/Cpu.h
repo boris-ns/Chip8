@@ -20,7 +20,7 @@ public:
 
 	void MainLoop();
 	void EmulateCycle();
-	void LoadROM(const std::string& romPath);
+	bool LoadROM(const std::string& romPath);
 	void Render(sf::RenderWindow& window);
 	void HandleEvents(sf::RenderWindow& window);
 	void Chip8::SwitchKeyState(sf::Keyboard::Key pressedKey, int state);
