@@ -99,9 +99,13 @@ bool Chip8::LoadROM(const std::string& romPath)
 /* Main loop of emulator. Loop is active until user closes the window. */
 void Chip8::MainLoop()
 {
-	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Chip8");
-	//window.setFramerateLimit(180); // Real Chip8 works at 60Hz, this is SFML frame limiter
+	unsigned int newWidth  = SCREEN_WIDTH  * MULTIPLIER;
+	unsigned int newHeight = SCREEN_HEIGHT * MULTIPLIER;
 
+	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Chip8");
+	window.setSize(sf::Vector2u(newWidth, newHeight)); // @Hack: make window and rendering picture bigger w/out changing resolution in CPU
+	//window.setFramerateLimit(180); // Real Chip8 works at 60Hz, this is SFML frame limiter
+	
 	while (window.isOpen())
 	{
 		EmulateCycle();
